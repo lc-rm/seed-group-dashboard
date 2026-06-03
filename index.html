@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シードグループ 採用分析ダッシュボード</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f0faf6; --card:#fff; --ink:#16302a; --sub:#5f7d74; --line:#d8ece4;
+    --brand:#10b981; --good:#059669; --warn:#d97706; --bad:#e11d48; --accent:#0d9488;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:linear-gradient(135deg,#0ea882,#34d399);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+  header h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.02em}
+  header .powered{font-size:11px;color:#d1fae5}
+  .updated{font-size:12px;color:#ecfdf5;margin-left:auto}
+  #refreshBtn{background:#fff;color:#0d9488;border:0;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+  #refreshBtn:active{transform:translateY(1px)}
+  .controls{background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;position:sticky;top:50px;z-index:15}
+  .ctl-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .ctl-label{font-size:11px;color:var(--sub);margin-right:2px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12px;cursor:pointer;color:#374151}
+  .chip.active{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+  .tabs{display:flex;gap:4px;padding:0 16px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:101px;z-index:14}
+  .tab{padding:11px 16px;font-size:13px;cursor:pointer;color:var(--sub);border-bottom:3px solid transparent;white-space:nowrap}
+  .tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+  main{padding:18px 20px 60px;max-width:1180px;margin:0 auto}
+  .panel{display:none}
+  .panel.active{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:18px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kpi .label{font-size:12px;color:var(--sub)}
+  .kpi .value{font-size:21px;font-weight:800;margin-top:4px;white-space:nowrap;letter-spacing:-.03em}
+  .kpi .sub{font-size:11px;color:var(--sub);margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:18px}
+  .card h2{font-size:14px;margin:0 0 12px;font-weight:700}
+  .card h2 .hint{font-size:11px;color:var(--sub);font-weight:400;margin-left:8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  thead th{background:#f9fafb;color:#374151;font-weight:700;position:sticky}
+  tbody tr:hover{background:#f8fafc}
+  tr.total{font-weight:800;background:#f1f5f9}
+  .bar{height:10px;border-radius:5px;background:var(--brand);display:inline-block;vertical-align:middle}
+  .rate-good{color:var(--good);font-weight:700}
+  .rate-bad{color:var(--bad)}
+  .chartwrap{position:relative;height:300px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.two{grid-template-columns:1fr}}
+  .muted{color:var(--sub);font-size:12px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+  .clickable{cursor:pointer;color:var(--brand);text-decoration:underline dotted}
+  .loading{padding:60px;text-align:center;color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <h1>シードグループ 採用分析ダッシュボード</h1>
+  <span class="powered">Powered by Link Core</span>
+  <span class="updated" id="updated"></span>
+  <button id="refreshBtn">最新情報へ更新</button>
+</header>
+
+<div class="controls">
+  <div class="ctl-group"><span class="ctl-label">ブランド</span><span id="brandChips"></span></div>
+  <div class="ctl-group"><span class="ctl-label">期間</span><span id="yearChips"></span></div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<main>
+  <div id="content" class="loading">データを読み込み中…</div>
+</main>
+
+<script>
+const TABS = ['概要','ブランド比較','店舗別','月別推移','媒体別','年代別','ステータス','予算・コスト'];
+const BRAND_ORDER = ['自遊空間','OWNDAYS','ガッツレンタカー','K-one CAFE','BOOK OFF','本社','山崎石油'];
+let RAW=null, RECORDS=[], SPEND=null;
+let state={brand:'全体', year:'全期間', tab:'概要'};
+let charts={};
+
+const yen = s => parseInt(String(s||'').replace(/[^0-9]/g,''))||0;
+const fmt = n => (n||0).toLocaleString('ja-JP');
+const pct = (a,b)=> b? (a/b*100):0;
+const pctS = (a,b)=> b? (a/b*100).toFixed(1)+'%' : '–';
+function dec(x){ x=String(x||'').replace(/[^0-9]/g,''); if(!x||x==='0') return '不明'; const n=Math.floor(parseInt(x)/10)*10; return n>=80?'80代以上':n+'代'; }
+
+async function load(){
+  const res = await fetch('data.json?t='+Date.now());
+  RAW = await res.json();
+  RECORDS = parseRecords(RAW);
+  SPEND = parseSpend(RAW);
+  document.getElementById('updated').textContent = '最終更新: ' + fmtTime(RAW.fetchedAt);
+  buildControls();
+  render();
+}
+function fmtTime(iso){ try{ const d=new Date(iso); return d.toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){return iso||'';}}
+
+// 個人情報なしの集計用データ（applicants[] / spend[]）を読む
+function parseRecords(data){
+  return (data.applicants||[]).map(a=>({
+    brand:a.brand, store:a.store||'(店舗未設定)', job:a.job||'',
+    age:a.age||'不明', gender:a.gender||'不明', ym:a.ym,
+    interviewed:!!a.interviewed, status:a.status||'', hired:a.status==='採用',
+    media:a.media||'未設定'
+  }));
+}
+function parseSpend(data){
+  const m={}; (data.spend||[]).forEach(s=>{ if(!s.brand||!s.cost) return; const k=s.brand+'|'+s.ym; m[k]=(m[k]||0)+s.cost; }); return m;
+}
+function spendFor(brands, years){
+  let sum=0;
+  for(const k in SPEND){ const [brand,ym]=k.split('|');
+    if(brands && !brands.includes(brand)) continue;
+    if(years && !years.includes(ym.slice(0,4))) continue;
+    sum+=SPEND[k]; }
+  return sum;
+}
+
+function filtered(){
+  return RECORDS.filter(r=>
+    (state.brand==='全体' || r.brand===state.brand) &&
+    (state.year==='全期間' || r.ym.slice(0,4)===state.year));
+}
+function brands(){ const s=new Set(RECORDS.map(r=>r.brand)); return BRAND_ORDER.filter(b=>s.has(b)).concat([...s].filter(b=>!BRAND_ORDER.includes(b))); }
+function years(){ return [...new Set(RECORDS.map(r=>r.ym.slice(0,4)))].sort(); }
+
+function buildControls(){
+  const bc=document.getElementById('brandChips'); bc.innerHTML='';
+  ['全体',...brands()].forEach(b=>{ const el=chip(b, state.brand===b, ()=>{state.brand=b; render();}); bc.appendChild(el);});
+  const yc=document.getElementById('yearChips'); yc.innerHTML='';
+  ['全期間',...years()].forEach(y=>{ const el=chip(y==='全期間'?y:y+'年', state.year===y, ()=>{state.year=y; render();}); yc.appendChild(el);});
+  const tb=document.getElementById('tabs'); tb.innerHTML='';
+  TABS.forEach(t=>{ const el=document.createElement('div'); el.className='tab'+(state.tab===t?' active':''); el.textContent=t; el.onclick=()=>{state.tab=t; render();}; tb.appendChild(el);});
+}
+function chip(label,active,onclick){ const el=document.createElement('span'); el.className='chip'+(active?' active':''); el.textContent=label; el.onclick=onclick; return el; }
+
+// ---- KPI aggregation ----
+function agg(recs){
+  const o={app:recs.length,intv:0,hire:0};
+  recs.forEach(r=>{ if(r.interviewed)o.intv++; if(r.hired)o.hire++; });
+  o.intvRate=pct(o.intv,o.app); o.hireRate=pct(o.hire,o.app); o.passRate=pct(o.hire,o.intv);
+  return o;
+}
+function groupAgg(recs, keyFn){
+  const m={};
+  recs.forEach(r=>{ const k=keyFn(r); (m[k]=m[k]||[]).push(r); });
+  return Object.entries(m).map(([k,rs])=>({key:k,...agg(rs)}));
+}
+
+function render(){
+  buildControls();
+  const c=document.getElementById('content'); c.className='';
+  const recs=filtered();
+  if(state.tab==='概要') c.innerHTML=viewOverview(recs);
+  else if(state.tab==='ブランド比較') c.innerHTML=viewBrand(recs);
+  else if(state.tab==='店舗別') c.innerHTML=viewStore(recs);
+  else if(state.tab==='月別推移') c.innerHTML=viewMonthly(recs);
+  else if(state.tab==='媒体別') c.innerHTML=viewMedia(recs);
+  else if(state.tab==='年代別') c.innerHTML=viewAge(recs);
+  else if(state.tab==='ステータス') c.innerHTML=viewStatus(recs);
+  else if(state.tab==='予算・コスト') c.innerHTML=viewCost(recs);
+  drawCharts(recs);
+}
+
+function kpiCards(recs){
+  const a=agg(recs);
+  const yrs = state.year==='全期間'?null:[state.year];
+  const brs = state.brand==='全体'?null:[state.brand];
+  const spend=spendFor(brs,yrs);
+  const cpa = a.hire? spend/a.hire : 0;
+  const cpapp = a.app? spend/a.app : 0;
+  return `<div class="kpis">
+    ${kpi('応募数',fmt(a.app)+'<span style="font-size:14px">人</span>')}
+    ${kpi('面接実施',fmt(a.intv)+'<span style="font-size:14px">人</span>','面接率 '+a.intvRate.toFixed(1)+'%')}
+    ${kpi('採用数',fmt(a.hire)+'<span style="font-size:14px">人</span>')}
+    ${kpi('採用率',a.hireRate.toFixed(1)+'%','応募→採用')}
+    ${kpi('面接通過率',a.passRate.toFixed(1)+'%','面接→採用')}
+    ${kpi('広告費',spend?'¥'+fmt(spend):'–')}
+    ${kpi('応募単価',cpapp?'¥'+fmt(Math.round(cpapp)):'–')}
+    ${kpi('採用単価',cpa?'¥'+fmt(Math.round(cpa)):'–')}
+  </div>`;
+}
+function kpi(label,value,sub){ return `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div>${sub?`<div class="sub">${sub}</div>`:''}</div>`; }
+
+// ---- 概要 ----
+function viewOverview(recs){
+  const scope = state.brand==='全体'?'全ブランド':state.brand;
+  return `${kpiCards(recs)}
+  <div class="card"><h2>月別 応募・採用 推移<span class="hint">${scope} / ${state.year}</span></h2><div class="chartwrap"><canvas id="ovTrend"></canvas></div></div>
+  <div class="two">
+    <div class="card"><h2>ブランド別 応募数</h2><div class="chartwrap"><canvas id="ovBrand"></canvas></div></div>
+    <div class="card"><h2>ステータス内訳</h2><div class="chartwrap"><canvas id="ovStatus"></canvas></div></div>
+  </div>`;
+}
+
+// ---- ブランド比較 ----
+function viewBrand(recs){
+  const rows=groupAgg(recs, r=>r.brand).sort((a,b)=>b.app-a.app);
+  const max=Math.max(...rows.map(r=>r.app),1);
+  const tot=agg(recs);
+  let body=rows.map(r=>`<tr>
+    <td>${r.key}</td>
+    <td>${fmt(r.app)}　<span class="bar" style="width:${r.app/max*80}px"></span></td>
+    <td>${fmt(r.intv)}</td><td>${r.intvRate.toFixed(0)}%</td>
+    <td>${fmt(r.hire)}</td>
+    <td class="${r.hireRate>=15?'rate-good':''}">${r.hireRate.toFixed(1)}%</td>
+    <td>${r.passRate.toFixed(0)}%</td>
+  </tr>`).join('');
+  return `${kpiCards(recs)}
+  <div class="card"><h2>ブランド別サマリー<span class="hint">ブランド名をクリック → そのブランドの「店舗別」深掘りへ</span></h2>
+  <table><thead><tr><th>ブランド</th><th>応募</th><th>面接</th><th>面接率</th><th>採用</th><th>採用率</th><th>通過率</th></tr></thead>
+  <tbody>${body}<tr class="total"><td>合計</td><td>${fmt(tot.app)}</td><td>${fmt(tot.intv)}</td><td>${tot.intvRate.toFixed(0)}%</td><td>${fmt(tot.hire)}</td><td>${tot.hireRate.toFixed(1)}%</td><td>${tot.passRate.toFixed(0)}%</td></tr></tbody></table></div>
+  <div class="two">
+   <div class="card"><h2>応募数・採用数</h2><div class="chartwrap"><canvas id="brBar"></canvas></div></div>
+   <div class="card"><h2>採用率（応募→採用）</h2><div class="chartwrap"><canvas id="brRate"></canvas></div></div>
+  </div>`;
+}
+
+// ---- 店舗別（ブランド内の支店深掘り）----
+function viewStore(recs){
+  if(state.brand==='全体'){
+    const rows=groupAgg(recs, r=>r.brand+' ／ '+r.store).sort((a,b)=>b.app-a.app).slice(0,30);
+    let body=rows.map(r=>`<tr><td>${r.key}</td><td>${fmt(r.app)}</td><td>${fmt(r.intv)}</td><td>${fmt(r.hire)}</td><td class="${r.hireRate>=15?'rate-good':''}">${r.hireRate.toFixed(1)}%</td></tr>`).join('');
+    return `${kpiCards(recs)}
+    <div class="card"><h2>支店・店舗別ランキング（応募数 上位30）<span class="hint">上の「ブランド」を選ぶと、そのブランド内の支店だけを深掘りできます</span></h2>
+    <table><thead><tr><th>ブランド ／ 店舗</th><th>応募</th><th>面接</th><th>採用</th><th>採用率</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+  const rows=groupAgg(recs, r=>r.store).sort((a,b)=>b.app-a.app);
+  const max=Math.max(...rows.map(r=>r.app),1);
+  const tot=agg(recs);
+  let body=rows.map(r=>`<tr>
+    <td>${r.key}</td>
+    <td>${fmt(r.app)}　<span class="bar" style="width:${r.app/max*70}px"></span></td>
+    <td>${fmt(r.intv)}</td><td>${r.intvRate.toFixed(0)}%</td>
+    <td>${fmt(r.hire)}</td><td class="${r.hireRate>=15?'rate-good':''}">${r.hireRate.toFixed(1)}%</td><td>${r.passRate.toFixed(0)}%</td></tr>`).join('');
+  return `${kpiCards(recs)}
+  <div class="card"><h2>${state.brand}：支店・店舗別サマリー<span class="hint">このブランド内の店舗を比較</span></h2>
+  <table><thead><tr><th>店舗</th><th>応募</th><th>面接</th><th>面接率</th><th>採用</th><th>採用率</th><th>通過率</th></tr></thead>
+  <tbody>${body}<tr class="total"><td>合計</td><td>${fmt(tot.app)}</td><td>${fmt(tot.intv)}</td><td>${tot.intvRate.toFixed(0)}%</td><td>${fmt(tot.hire)}</td><td>${tot.hireRate.toFixed(1)}%</td><td>${tot.passRate.toFixed(0)}%</td></tr></tbody></table></div>
+  <div class="two">
+   <div class="card"><h2>店舗別 応募・採用</h2><div class="chartwrap"><canvas id="stStore"></canvas></div></div>
+   <div class="card"><h2>主要店舗の月別 応募推移<span class="hint">応募上位5店舗</span></h2><div class="chartwrap"><canvas id="stStoreMo"></canvas></div></div>
+  </div>`;
+}
+
+// ---- 月別推移 ----
+function viewMonthly(recs){
+  const rows=groupAgg(recs, r=>r.ym).sort((a,b)=>a.key.localeCompare(b.key));
+  let body=rows.map(r=>`<tr><td>${r.key.slice(0,4)}/${r.key.slice(4)}</td>
+    <td>${fmt(r.app)}</td><td>${fmt(r.intv)}</td><td>${fmt(r.hire)}</td>
+    <td class="${r.hireRate>=15?'rate-good':''}">${r.hireRate.toFixed(1)}%</td></tr>`).join('');
+  return `${kpiCards(recs)}
+  <div class="card"><h2>月別推移</h2><div class="chartwrap"><canvas id="moChart"></canvas></div></div>
+  <div class="card"><h2>月別テーブル</h2><table><thead><tr><th>月</th><th>応募</th><th>面接</th><th>採用</th><th>採用率</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+// ---- 媒体別 ----
+function viewMedia(recs){
+  const rows=groupAgg(recs, r=>r.media).sort((a,b)=>b.app-a.app);
+  let body=rows.map(r=>`<tr><td>${r.key}</td><td>${fmt(r.app)}</td><td>${fmt(r.intv)}</td><td>${fmt(r.hire)}</td><td>${r.hireRate.toFixed(1)}%</td></tr>`).join('');
+  return `${kpiCards(recs)}
+  <div class="two">
+   <div class="card"><h2>媒体別 応募数</h2><div class="chartwrap"><canvas id="mdChart"></canvas></div></div>
+   <div class="card"><h2>媒体別テーブル</h2><table><thead><tr><th>媒体</th><th>応募</th><th>面接</th><th>採用</th><th>採用率</th></tr></thead><tbody>${body}</tbody></table></div>
+  </div>`;
+}
+
+// ---- 年代別 ----
+function viewAge(recs){
+  const order=['10代','20代','30代','40代','50代','60代','70代','80代以上','不明'];
+  const rows=groupAgg(recs, r=>r.age).sort((a,b)=>order.indexOf(a.key)-order.indexOf(b.key));
+  let body=rows.map(r=>`<tr><td>${r.key}</td><td>${fmt(r.app)}</td><td>${fmt(r.hire)}</td><td>${r.hireRate.toFixed(1)}%</td></tr>`).join('');
+  return `${kpiCards(recs)}
+  <div class="two">
+   <div class="card"><h2>年代別 応募構成</h2><div class="chartwrap"><canvas id="ageDonut"></canvas></div></div>
+   <div class="card"><h2>年代別 応募・採用</h2><div class="chartwrap"><canvas id="ageBar"></canvas></div></div>
+  </div>
+  <div class="card"><h2>年代別テーブル</h2><table><thead><tr><th>年代</th><th>応募</th><th>採用</th><th>採用率</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+// ---- ステータス ----
+function viewStatus(recs){
+  const rows=groupAgg(recs, r=>r.status||'(空欄)').sort((a,b)=>b.app-a.app);
+  const tot=recs.length;
+  let body=rows.map(r=>`<tr><td>${r.key}</td><td>${fmt(r.app)}</td><td>${pctS(r.app,tot)}</td></tr>`).join('');
+  const a=agg(recs);
+  return `<div class="card"><h2>選考ファネル<span class="hint">応募 → 面接 → 採用</span></h2>
+    <div class="chartwrap" style="height:200px"><canvas id="funnel"></canvas></div></div>
+  <div class="two">
+   <div class="card"><h2>ステータス内訳</h2><div class="chartwrap"><canvas id="stChart"></canvas></div></div>
+   <div class="card"><h2>ステータス別テーブル</h2><table><thead><tr><th>ステータス</th><th>件数</th><th>割合</th></tr></thead><tbody>${body}</tbody></table></div>
+  </div>`;
+}
+
+// ---- 予算・コスト ----
+function viewCost(recs){
+  const yrs = state.year==='全期間'?null:[state.year];
+  const brs = state.brand==='全体'?null:[state.brand];
+  const rows = (state.brand==='全体'?brands():[state.brand]).map(b=>{
+    const rs=recs.filter(r=>r.brand===b); const a=agg(rs); const sp=spendFor([b],yrs);
+    return {brand:b,spend:sp,app:a.app,hire:a.hire,cpapp:a.app?sp/a.app:0,cpa:a.hire?sp/a.hire:0};
+  }).sort((x,y)=>y.spend-x.spend);
+  let body=rows.map(r=>`<tr><td>${r.brand}</td><td>${r.spend?'¥'+fmt(r.spend):'–'}</td><td>${fmt(r.app)}</td><td>${fmt(r.hire)}</td>
+     <td>${r.cpapp?'¥'+fmt(Math.round(r.cpapp)):'–'}</td><td>${r.cpa?'¥'+fmt(Math.round(r.cpa)):'–'}</td></tr>`).join('');
+  const totSpend=rows.reduce((s,r)=>s+r.spend,0), totApp=rows.reduce((s,r)=>s+r.app,0), totHire=rows.reduce((s,r)=>s+r.hire,0);
+  return `${kpiCards(recs)}
+  <div class="card"><h2>ブランド別 広告費・単価<span class="hint">広告費は媒体管理シートのコスト合計</span></h2>
+  <table><thead><tr><th>ブランド</th><th>広告費</th><th>応募</th><th>採用</th><th>応募単価</th><th>採用単価</th></tr></thead>
+  <tbody>${body}<tr class="total"><td>合計</td><td>¥${fmt(totSpend)}</td><td>${fmt(totApp)}</td><td>${fmt(totHire)}</td><td>${totApp?'¥'+fmt(Math.round(totSpend/totApp)):'–'}</td><td>${totHire?'¥'+fmt(Math.round(totSpend/totHire)):'–'}</td></tr></tbody></table></div>
+  <div class="card"><h2>月別 広告費 vs 採用数</h2><div class="chartwrap"><canvas id="costChart"></canvas></div></div>`;
+}
+
+// ---- charts ----
+function destroyCharts(){ Object.values(charts).forEach(c=>c&&c.destroy()); charts={}; }
+const PAL=['#10b981','#0d9488','#14b8a6','#f59e0b','#6366f1','#e11d48','#ec4899','#84cc16','#94a3b8'];
+function drawCharts(recs){
+  destroyCharts();
+  const mk=(id,cfg)=>{ const el=document.getElementById(id); if(el) charts[id]=new Chart(el,cfg); };
+  const monthly = ()=>{ const m=groupAgg(recs,r=>r.ym).sort((a,b)=>a.key.localeCompare(b.key));
+    return {labels:m.map(r=>r.key.slice(2,4)+'/'+r.key.slice(4)),app:m.map(r=>r.app),hire:m.map(r=>r.hire),rate:m.map(r=>+r.hireRate.toFixed(1))};};
+
+  if(state.tab==='概要'){
+    const M=monthly();
+    mk('ovTrend',{type:'bar',data:{labels:M.labels,datasets:[
+      {label:'応募',data:M.app,backgroundColor:'#a7f3d0'},
+      {label:'採用',data:M.hire,backgroundColor:'#10b981'},
+      {label:'採用率%',data:M.rate,type:'line',yAxisID:'y1',borderColor:'#e11d48',backgroundColor:'#e11d48',tension:.3}
+    ]},options:trendOpts()});
+    const br=groupAgg(recs,r=>r.brand).sort((a,b)=>b.app-a.app);
+    mk('ovBrand',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[{label:'応募',data:br.map(r=>r.app),backgroundColor:PAL}]},options:hbar()});
+    const st=groupAgg(recs,r=>r.status||'(空欄)').sort((a,b)=>b.app-a.app).slice(0,8);
+    mk('ovStatus',{type:'doughnut',data:{labels:st.map(r=>r.key),datasets:[{data:st.map(r=>r.app),backgroundColor:PAL}]},options:donut()});
+  }
+  if(state.tab==='ブランド比較'){
+    const br=groupAgg(recs,r=>r.brand).sort((a,b)=>b.app-a.app);
+    mk('brBar',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[
+      {label:'応募',data:br.map(r=>r.app),backgroundColor:'#a7f3d0'},
+      {label:'採用',data:br.map(r=>r.hire),backgroundColor:'#10b981'}]},options:baseOpts()});
+    mk('brRate',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[{label:'採用率%',data:br.map(r=>+r.hireRate.toFixed(1)),backgroundColor:'#059669'}]},options:baseOpts()});
+  }
+  if(state.tab==='店舗別' && state.brand!=='全体'){
+    const st=groupAgg(recs,r=>r.store).sort((a,b)=>b.app-a.app);
+    mk('stStore',{type:'bar',data:{labels:st.map(r=>r.key),datasets:[
+      {label:'応募',data:st.map(r=>r.app),backgroundColor:'#a7f3d0'},
+      {label:'採用',data:st.map(r=>r.hire),backgroundColor:'#10b981'}]},options:hbar(true)});
+    const yms=[...new Set(recs.map(r=>r.ym))].sort();
+    const top=st.slice(0,5).map(r=>r.key);
+    const ds=top.map((s,i)=>({label:s,data:yms.map(ym=>recs.filter(r=>r.store===s&&r.ym===ym).length),borderColor:PAL[i],backgroundColor:PAL[i],tension:.3,fill:false}));
+    mk('stStoreMo',{type:'line',data:{labels:yms.map(y=>y.slice(2,4)+'/'+y.slice(4)),datasets:ds},options:baseOpts()});
+  }
+  if(state.tab==='月別推移'){
+    const M=monthly();
+    mk('moChart',{type:'bar',data:{labels:M.labels,datasets:[
+      {label:'応募',data:M.app,backgroundColor:'#a7f3d0'},
+      {label:'面接',data:groupAgg(recs,r=>r.ym).sort((a,b)=>a.key.localeCompare(b.key)).map(r=>r.intv),backgroundColor:'#6ee7b7'},
+      {label:'採用',data:M.hire,backgroundColor:'#10b981'},
+      {label:'採用率%',data:M.rate,type:'line',yAxisID:'y1',borderColor:'#e11d48',backgroundColor:'#e11d48',tension:.3}]},options:trendOpts()});
+  }
+  if(state.tab==='媒体別'){
+    const md=groupAgg(recs,r=>r.media).sort((a,b)=>b.app-a.app);
+    mk('mdChart',{type:'bar',data:{labels:md.map(r=>r.key),datasets:[
+      {label:'応募',data:md.map(r=>r.app),backgroundColor:'#a7f3d0'},
+      {label:'採用',data:md.map(r=>r.hire),backgroundColor:'#10b981'}]},options:hbar(true)});
+  }
+  if(state.tab==='年代別'){
+    const order=['10代','20代','30代','40代','50代','60代','70代','80代以上','不明'];
+    const ag=groupAgg(recs,r=>r.age).sort((a,b)=>order.indexOf(a.key)-order.indexOf(b.key));
+    mk('ageDonut',{type:'doughnut',data:{labels:ag.map(r=>r.key),datasets:[{data:ag.map(r=>r.app),backgroundColor:PAL}]},options:donut()});
+    mk('ageBar',{type:'bar',data:{labels:ag.map(r=>r.key),datasets:[
+      {label:'応募',data:ag.map(r=>r.app),backgroundColor:'#a7f3d0'},
+      {label:'採用',data:ag.map(r=>r.hire),backgroundColor:'#10b981'}]},options:baseOpts()});
+  }
+  if(state.tab==='ステータス'){
+    const a=agg(recs);
+    mk('funnel',{type:'bar',data:{labels:['応募','面接実施','採用'],datasets:[{data:[a.app,a.intv,a.hire],backgroundColor:['#a7f3d0','#34d399','#10b981']}]},options:hbar()});
+    const st=groupAgg(recs,r=>r.status||'(空欄)').sort((a,b)=>b.app-a.app);
+    mk('stChart',{type:'doughnut',data:{labels:st.map(r=>r.key),datasets:[{data:st.map(r=>r.app),backgroundColor:PAL.concat(PAL)}]},options:donut()});
+  }
+  if(state.tab==='予算・コスト'){
+    const yms=[...new Set(RECORDS.filter(r=>state.brand==='全体'||r.brand===state.brand).filter(r=>state.year==='全期間'||r.ym.slice(0,4)===state.year).map(r=>r.ym))].sort();
+    const brs = state.brand==='全体'?null:[state.brand];
+    const spend=yms.map(ym=>{ let s=0; for(const k in SPEND){const[b,y]=k.split('|'); if((!brs||brs.includes(b))&&y===ym) s+=SPEND[k];} return s;});
+    const hire=yms.map(ym=>recs.filter(r=>r.ym===ym&&r.hired).length);
+    mk('costChart',{type:'bar',data:{labels:yms.map(y=>y.slice(2,4)+'/'+y.slice(4)),datasets:[
+      {label:'広告費',data:spend,backgroundColor:'#fcd34d',yAxisID:'y'},
+      {label:'採用数',data:hire,type:'line',yAxisID:'y1',borderColor:'#10b981',backgroundColor:'#10b981',tension:.3}]},options:trendOpts(true)});
+  }
+}
+function baseOpts(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}};}
+function hbar(legend){return{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:!!legend,labels:{font:{size:11}}}},scales:{x:{beginAtZero:true}}};}
+function donut(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}}}};}
+function trendOpts(money){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{
+  y:{beginAtZero:true,position:'left'},
+  y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false}}}};}
+
+// click brand rows -> filter (delegate)
+document.addEventListener('click',e=>{
+  const tr=e.target.closest('#content table tr'); if(!tr) return;
+  if(state.tab!=='ブランド比較') return;
+  const name=tr.querySelector('td')?.textContent?.trim();
+  if(name && brands().includes(name)){ state.brand=name; state.tab='店舗別'; render(); }
+});
+
+document.getElementById('refreshBtn').onclick=async()=>{
+  const b=document.getElementById('refreshBtn'); b.textContent='更新中…'; b.disabled=true;
+  try{ await load(); }catch(e){ alert('更新に失敗しました: '+e.message); }
+  b.textContent='最新情報へ更新'; b.disabled=false;
+};
+
+load().catch(e=>{ document.getElementById('content').innerHTML='<div class="loading">データの読み込みに失敗しました。<br>'+e.message+'</div>'; });
+</script>
+</body>
+</html>
