@@ -55,25 +55,37 @@
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
   .clickable{cursor:pointer;color:var(--brand);text-decoration:underline dotted}
   .loading{padding:60px;text-align:center;color:var(--sub)}
-  #authGate{position:fixed;inset:0;background:linear-gradient(135deg,#0ea882,#34d399);display:flex;align-items:center;justify-content:center;z-index:9999}
-  .auth-card{background:#fff;border-radius:18px;padding:38px 40px;text-align:center;box-shadow:0 14px 50px rgba(0,0,0,.22);max-width:360px;width:90%}
-  .auth-logo{font-size:21px;font-weight:800;color:#0f766e;line-height:1.4}
-  .auth-sub{font-size:12px;color:#6b7280;margin:6px 0 26px}
-  #loginBtn{background:#10b981;color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:800;cursor:pointer;width:100%}
+  #authGate{position:fixed;inset:0;background:linear-gradient(150deg,#0d8a70 0%,#2fbf93 55%,#86e0c4 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+  #authGate::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 25% 20%,rgba(255,255,255,.18),transparent 40%),radial-gradient(circle at 80% 80%,rgba(255,255,255,.12),transparent 45%);pointer-events:none}
+  .auth-card{position:relative;background:#fff;border-radius:22px;padding:42px 38px 30px;text-align:center;box-shadow:0 24px 70px rgba(6,40,30,.32);max-width:380px;width:100%}
+  .auth-badge{width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 18px;box-shadow:0 8px 20px rgba(16,185,129,.38)}
+  .auth-title{font-size:19px;font-weight:800;color:#15302a;letter-spacing:.02em}
+  .auth-sub{font-size:11px;color:#9aa6a2;margin:7px 0 0;letter-spacing:.18em}
+  .auth-divider{height:1px;background:var(--line);margin:22px 0}
+  #loginBtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:11px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:box-shadow .15s,background .15s}
+  #loginBtn:hover{background:#f7faf9;box-shadow:0 2px 8px rgba(0,0,0,.12)}
   #loginBtn:active{transform:translateY(1px)}
-  .auth-note{font-size:12px;color:#6b7280;margin-top:16px}
-  .auth-error{font-size:12.5px;color:#e11d48;margin-top:14px;min-height:1em}
+  .auth-note{font-size:11.5px;color:#9aa6a2;margin-top:18px;line-height:1.6}
+  .auth-note b{color:#0f766e}
+  .auth-error{font-size:12.5px;color:#e11d48;margin-top:12px;min-height:1em}
+  .auth-foot{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:rgba(255,255,255,.75);font-size:11px;letter-spacing:.05em}
 </style>
 </head>
 <body>
 <div id="authGate">
   <div class="auth-card">
-    <div class="auth-logo">🌱 シードグループ<br>採用分析ダッシュボード</div>
-    <p class="auth-sub">Powered by Link Core</p>
-    <button id="loginBtn">Google でログイン</button>
-    <p class="auth-note">@link-core.co.jp のアカウント限定</p>
+    <div class="auth-badge">🌱</div>
+    <div class="auth-title">シードグループ 採用分析</div>
+    <div class="auth-sub">RECRUITMENT DASHBOARD</div>
+    <div class="auth-divider"></div>
+    <button id="loginBtn">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Google でログイン
+    </button>
+    <p class="auth-note"><b>@link-core.co.jp</b> のアカウントのみ<br>ご利用いただけます</p>
     <p id="authError" class="auth-error"></p>
   </div>
+  <div class="auth-foot">Powered by Link Core</div>
 </div>
 <header>
   <h1>シードグループ 採用分析ダッシュボード</h1>
@@ -97,7 +109,7 @@
 const TABS = ['概要','ブランド比較','店舗別','月別推移','媒体別','年代別','ステータス','予算・コスト'];
 const BRAND_ORDER = ['自遊空間','OWNDAYS','ガッツレンタカー','K-one CAFE','BOOK OFF','本社','山崎石油'];
 let RAW=null, RECORDS=[], SPEND=null;
-let state={brand:'全体', year:'全期間', tab:'概要'};
+let state={brand:'全体', year:'全期間', tab:'概要', monthDetail:''};
 let charts={};
 
 const yen = s => parseInt(String(s||'').replace(/[^0-9]/g,''))||0;
@@ -112,6 +124,7 @@ async function load(){
   RECORDS = parseRecords(RAW);
   SPEND = parseSpend(RAW);
   document.getElementById('updated').textContent = '最終更新: ' + fmtTime(RAW.fetchedAt);
+  state.monthDetail = ''; // 更新時は最新の月を表示
   buildControls();
   render();
 }
@@ -265,15 +278,44 @@ function viewStore(recs){
   </div>`;
 }
 
-// ---- 月別推移 ----
+// ---- 月別推移（月を選んで深掘り）----
+function mlabel(ym){ return ym.slice(0,4)+'年'+(+ym.slice(4))+'月'; }
+function spendMonth(ym){ const brs=state.brand==='全体'?null:[state.brand]; let s=0; for(const k in SPEND){const[b,y]=k.split('|'); if((!brs||brs.includes(b))&&y===ym) s+=SPEND[k];} return s; }
 function viewMonthly(recs){
+  const months=[...new Set(recs.map(r=>r.ym))].sort();
+  if(!months.length) return `<div class="card"><h2>月別推移</h2><p class="muted">この条件のデータがありません。</p></div>`;
+  if(!state.monthDetail || !months.includes(state.monthDetail)) state.monthDetail=months[months.length-1];
+  const md=state.monthDetail, lbl=mlabel(md);
+  const opts=months.slice().reverse().map(m=>`<option value="${m}" ${m===md?'selected':''}>${mlabel(m)}</option>`).join('');
+  // 月別テーブル（全月・行クリックで選択）
   const rows=groupAgg(recs, r=>r.ym).sort((a,b)=>a.key.localeCompare(b.key));
-  let body=rows.map(r=>`<tr><td>${r.key.slice(0,4)}/${r.key.slice(4)}</td>
-    <td>${fmt(r.app)}</td><td>${fmt(r.intv)}</td><td>${fmt(r.hire)}</td>
+  const tbody=rows.map(r=>`<tr class="moRow${r.key===md?' total':''}" data-ym="${r.key}" style="cursor:pointer">
+    <td>${r.key.slice(0,4)}/${r.key.slice(4)}</td><td>${fmt(r.app)}</td><td>${fmt(r.intv)}</td><td>${fmt(r.hire)}</td>
     <td class="${r.hireRate>=15?'rate-good':''}">${r.hireRate.toFixed(1)}%</td></tr>`).join('');
-  return `${kpiCards(recs)}
-  <div class="card"><h2>月別推移</h2><div class="chartwrap"><canvas id="moChart"></canvas></div></div>
-  <div class="card"><h2>月別テーブル</h2><table><thead><tr><th>月</th><th>応募</th><th>面接</th><th>採用</th><th>採用率</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  // 選択月のKPI
+  const a=agg(recs.filter(r=>r.ym===md)), sp=spendMonth(md);
+  const card=(title,canv)=>`<div class="card"><h2>${title}</h2><div class="chartwrap" style="height:250px"><canvas id="${canv}"></canvas></div></div>`;
+  return `
+  <div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <h2 style="margin:0">月を選んで深掘り</h2>
+    <select id="monthSel" style="padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-weight:700;color:var(--ink)">${opts}</select>
+    <span class="muted">▶ ${lbl} の内訳を表示中</span>
+  </div>
+  <div class="kpis">
+    ${kpi(lbl+' 応募数',fmt(a.app)+'<span style="font-size:14px">人</span>')}
+    ${kpi('面接実施',fmt(a.intv)+'人','面接率 '+a.intvRate.toFixed(1)+'%')}
+    ${kpi('採用数',fmt(a.hire)+'人')}
+    ${kpi('採用率',a.hireRate.toFixed(1)+'%','応募→採用')}
+    ${kpi('面接通過率',a.passRate.toFixed(1)+'%','面接→採用')}
+    ${kpi('広告費',sp?'¥'+fmt(sp):'–')}
+    ${kpi('応募単価',a.app&&sp?'¥'+fmt(Math.round(sp/a.app)):'–')}
+    ${kpi('採用単価',a.hire&&sp?'¥'+fmt(Math.round(sp/a.hire)):'–')}
+  </div>
+  <div class="card"><h2>月別推移<span class="hint">${state.brand==='全体'?'全ブランド':state.brand} / ${state.year}・棒=応募/面接/採用、線=採用率</span></h2><div class="chartwrap"><canvas id="moChart"></canvas></div></div>
+  <div class="two">${card(lbl+'｜ブランド別 応募・採用','moBrand')}${card(lbl+'｜媒体別 応募','moMedia')}</div>
+  <div class="two">${card(lbl+'｜年代別 応募','moAge')}${card(lbl+'｜ステータス内訳','moStatus')}</div>
+  <div class="card"><h2>月別テーブル<span class="hint">行をクリックでその月を深掘り（青＝選択中）</span></h2>
+    <table><thead><tr><th>月</th><th>応募</th><th>面接</th><th>採用</th><th>採用率</th></tr></thead><tbody>${tbody}</tbody></table></div>`;
 }
 
 // ---- 媒体別 ----
@@ -334,7 +376,9 @@ function viewCost(recs){
 
 // ---- charts ----
 function destroyCharts(){ Object.values(charts).forEach(c=>c&&c.destroy()); charts={}; }
-const PAL=['#10b981','#0d9488','#14b8a6','#f59e0b','#6366f1','#e11d48','#ec4899','#84cc16','#94a3b8'];
+const PAL=['#3f9e83','#6bb6a0','#93ccb9','#e0b06a','#8593c9','#cf8390','#c294b8','#a8c081','#a7b0ad'];
+// グラフ用の落ち着いた配色
+const C_APP='#dcebe5', C_INT='#a6d2c4', C_HIRE='#3f9e83', C_LINE='#dd9a63';
 function drawCharts(recs){
   destroyCharts();
   const mk=(id,cfg)=>{ const el=document.getElementById(id); if(el) charts[id]=new Chart(el,cfg); };
@@ -344,9 +388,9 @@ function drawCharts(recs){
   if(state.tab==='概要'){
     const M=monthly();
     mk('ovTrend',{type:'bar',data:{labels:M.labels,datasets:[
-      {label:'応募',data:M.app,backgroundColor:'#a7f3d0'},
-      {label:'採用',data:M.hire,backgroundColor:'#10b981'},
-      {label:'採用率%',data:M.rate,type:'line',yAxisID:'y1',borderColor:'#e11d48',backgroundColor:'#e11d48',tension:.3}
+      {label:'応募',data:M.app,backgroundColor:C_APP},
+      {label:'採用',data:M.hire,backgroundColor:C_HIRE},
+      {label:'採用率%',data:M.rate,type:'line',yAxisID:'y1',borderColor:C_LINE,backgroundColor:C_LINE,tension:.3}
     ]},options:trendOpts()});
     const br=groupAgg(recs,r=>r.brand).sort((a,b)=>b.app-a.app);
     mk('ovBrand',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[{label:'応募',data:br.map(r=>r.app),backgroundColor:PAL}]},options:hbar()});
@@ -356,15 +400,15 @@ function drawCharts(recs){
   if(state.tab==='ブランド比較'){
     const br=groupAgg(recs,r=>r.brand).sort((a,b)=>b.app-a.app);
     mk('brBar',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[
-      {label:'応募',data:br.map(r=>r.app),backgroundColor:'#a7f3d0'},
-      {label:'採用',data:br.map(r=>r.hire),backgroundColor:'#10b981'}]},options:baseOpts()});
-    mk('brRate',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[{label:'採用率%',data:br.map(r=>+r.hireRate.toFixed(1)),backgroundColor:'#059669'}]},options:baseOpts()});
+      {label:'応募',data:br.map(r=>r.app),backgroundColor:C_APP},
+      {label:'採用',data:br.map(r=>r.hire),backgroundColor:C_HIRE}]},options:baseOpts()});
+    mk('brRate',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[{label:'採用率%',data:br.map(r=>+r.hireRate.toFixed(1)),backgroundColor:C_HIRE}]},options:baseOpts()});
   }
   if(state.tab==='店舗別' && state.brand!=='全体'){
     const st=groupAgg(recs,r=>r.store).sort((a,b)=>b.app-a.app);
     mk('stStore',{type:'bar',data:{labels:st.map(r=>r.key),datasets:[
-      {label:'応募',data:st.map(r=>r.app),backgroundColor:'#a7f3d0'},
-      {label:'採用',data:st.map(r=>r.hire),backgroundColor:'#10b981'}]},options:hbar(true)});
+      {label:'応募',data:st.map(r=>r.app),backgroundColor:C_APP},
+      {label:'採用',data:st.map(r=>r.hire),backgroundColor:C_HIRE}]},options:hbar(true)});
     const yms=[...new Set(recs.map(r=>r.ym))].sort();
     const top=st.slice(0,5).map(r=>r.key);
     const ds=top.map((s,i)=>({label:s,data:yms.map(ym=>recs.filter(r=>r.store===s&&r.ym===ym).length),borderColor:PAL[i],backgroundColor:PAL[i],tension:.3,fill:false}));
@@ -372,29 +416,42 @@ function drawCharts(recs){
   }
   if(state.tab==='月別推移'){
     const M=monthly();
+    const intv=groupAgg(recs,r=>r.ym).sort((a,b)=>a.key.localeCompare(b.key)).map(r=>r.intv);
     mk('moChart',{type:'bar',data:{labels:M.labels,datasets:[
-      {label:'応募',data:M.app,backgroundColor:'#a7f3d0'},
-      {label:'面接',data:groupAgg(recs,r=>r.ym).sort((a,b)=>a.key.localeCompare(b.key)).map(r=>r.intv),backgroundColor:'#6ee7b7'},
-      {label:'採用',data:M.hire,backgroundColor:'#10b981'},
-      {label:'採用率%',data:M.rate,type:'line',yAxisID:'y1',borderColor:'#e11d48',backgroundColor:'#e11d48',tension:.3}]},options:trendOpts()});
+      {label:'応募',data:M.app,backgroundColor:C_APP},
+      {label:'面接',data:intv,backgroundColor:C_INT},
+      {label:'採用',data:M.hire,backgroundColor:C_HIRE},
+      {label:'採用率%',data:M.rate,type:'line',yAxisID:'y1',borderColor:C_LINE,backgroundColor:C_LINE,tension:.3}]},options:trendOpts()});
+    // 選択月の内訳
+    const mRecs=recs.filter(r=>r.ym===state.monthDetail);
+    const br=groupAgg(mRecs,r=>r.brand).sort((a,b)=>b.app-a.app);
+    mk('moBrand',{type:'bar',data:{labels:br.map(r=>r.key),datasets:[
+      {label:'応募',data:br.map(r=>r.app),backgroundColor:C_APP},{label:'採用',data:br.map(r=>r.hire),backgroundColor:C_HIRE}]},options:hbar(true)});
+    const mdm=groupAgg(mRecs,r=>r.media).sort((a,b)=>b.app-a.app);
+    mk('moMedia',{type:'bar',data:{labels:mdm.map(r=>r.key),datasets:[{label:'応募',data:mdm.map(r=>r.app),backgroundColor:PAL}]},options:hbar()});
+    const order=['10代','20代','30代','40代','50代','60代','70代','80代以上','不明'];
+    const ag=groupAgg(mRecs,r=>r.age).sort((a,b)=>order.indexOf(a.key)-order.indexOf(b.key));
+    mk('moAge',{type:'doughnut',data:{labels:ag.map(r=>r.key),datasets:[{data:ag.map(r=>r.app),backgroundColor:PAL}]},options:donut()});
+    const st=groupAgg(mRecs,r=>r.status||'(空欄)').sort((a,b)=>b.app-a.app);
+    mk('moStatus',{type:'doughnut',data:{labels:st.map(r=>r.key),datasets:[{data:st.map(r=>r.app),backgroundColor:PAL.concat(PAL)}]},options:donut()});
   }
   if(state.tab==='媒体別'){
     const md=groupAgg(recs,r=>r.media).sort((a,b)=>b.app-a.app);
     mk('mdChart',{type:'bar',data:{labels:md.map(r=>r.key),datasets:[
-      {label:'応募',data:md.map(r=>r.app),backgroundColor:'#a7f3d0'},
-      {label:'採用',data:md.map(r=>r.hire),backgroundColor:'#10b981'}]},options:hbar(true)});
+      {label:'応募',data:md.map(r=>r.app),backgroundColor:C_APP},
+      {label:'採用',data:md.map(r=>r.hire),backgroundColor:C_HIRE}]},options:hbar(true)});
   }
   if(state.tab==='年代別'){
     const order=['10代','20代','30代','40代','50代','60代','70代','80代以上','不明'];
     const ag=groupAgg(recs,r=>r.age).sort((a,b)=>order.indexOf(a.key)-order.indexOf(b.key));
     mk('ageDonut',{type:'doughnut',data:{labels:ag.map(r=>r.key),datasets:[{data:ag.map(r=>r.app),backgroundColor:PAL}]},options:donut()});
     mk('ageBar',{type:'bar',data:{labels:ag.map(r=>r.key),datasets:[
-      {label:'応募',data:ag.map(r=>r.app),backgroundColor:'#a7f3d0'},
-      {label:'採用',data:ag.map(r=>r.hire),backgroundColor:'#10b981'}]},options:baseOpts()});
+      {label:'応募',data:ag.map(r=>r.app),backgroundColor:C_APP},
+      {label:'採用',data:ag.map(r=>r.hire),backgroundColor:C_HIRE}]},options:baseOpts()});
   }
   if(state.tab==='ステータス'){
     const a=agg(recs);
-    mk('funnel',{type:'bar',data:{labels:['応募','面接実施','採用'],datasets:[{data:[a.app,a.intv,a.hire],backgroundColor:['#a7f3d0','#34d399','#10b981']}]},options:hbar()});
+    mk('funnel',{type:'bar',data:{labels:['応募','面接実施','採用'],datasets:[{data:[a.app,a.intv,a.hire],backgroundColor:[C_APP,C_INT,C_HIRE]}]},options:hbar()});
     const st=groupAgg(recs,r=>r.status||'(空欄)').sort((a,b)=>b.app-a.app);
     mk('stChart',{type:'doughnut',data:{labels:st.map(r=>r.key),datasets:[{data:st.map(r=>r.app),backgroundColor:PAL.concat(PAL)}]},options:donut()});
   }
@@ -404,8 +461,8 @@ function drawCharts(recs){
     const spend=yms.map(ym=>{ let s=0; for(const k in SPEND){const[b,y]=k.split('|'); if((!brs||brs.includes(b))&&y===ym) s+=SPEND[k];} return s;});
     const hire=yms.map(ym=>recs.filter(r=>r.ym===ym&&r.hired).length);
     mk('costChart',{type:'bar',data:{labels:yms.map(y=>y.slice(2,4)+'/'+y.slice(4)),datasets:[
-      {label:'広告費',data:spend,backgroundColor:'#fcd34d',yAxisID:'y'},
-      {label:'採用数',data:hire,type:'line',yAxisID:'y1',borderColor:'#10b981',backgroundColor:'#10b981',tension:.3}]},options:trendOpts(true)});
+      {label:'広告費',data:spend,backgroundColor:'#e6c879',yAxisID:'y'},
+      {label:'採用数',data:hire,type:'line',yAxisID:'y1',borderColor:C_HIRE,backgroundColor:C_HIRE,tension:.3}]},options:trendOpts(true)});
   }
 }
 function baseOpts(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}};}
@@ -417,10 +474,15 @@ function trendOpts(money){return{responsive:true,maintainAspectRatio:false,plugi
 
 // click brand rows -> filter (delegate)
 document.addEventListener('click',e=>{
+  const moRow=e.target.closest('.moRow');
+  if(moRow){ state.monthDetail=moRow.dataset.ym; render(); return; }
   const tr=e.target.closest('#content table tr'); if(!tr) return;
   if(state.tab!=='ブランド比較') return;
   const name=tr.querySelector('td')?.textContent?.trim();
   if(name && brands().includes(name)){ state.brand=name; state.tab='店舗別'; render(); }
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='monthSel'){ state.monthDetail=e.target.value; render(); }
 });
 
 document.getElementById('refreshBtn').onclick=async()=>{
