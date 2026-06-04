@@ -20,6 +20,8 @@
   .updated{font-size:12px;color:#ecfdf5;margin-left:auto}
   #refreshBtn{background:#fff;color:#0d9488;border:0;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15)}
   #refreshBtn:active{transform:translateY(1px)}
+  #logoutBtn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
+  #logoutBtn:hover{background:rgba(255,255,255,.28)}
   .controls{background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;position:sticky;top:50px;z-index:15}
   .ctl-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .ctl-label{font-size:11px;color:var(--sub);margin-right:2px}
@@ -55,34 +57,38 @@
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
   .clickable{cursor:pointer;color:var(--brand);text-decoration:underline dotted}
   .loading{padding:60px;text-align:center;color:var(--sub)}
-  #authGate{position:fixed;inset:0;background:linear-gradient(150deg,#0d8a70 0%,#2fbf93 55%,#86e0c4 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
-  #authGate::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 25% 20%,rgba(255,255,255,.18),transparent 40%),radial-gradient(circle at 80% 80%,rgba(255,255,255,.12),transparent 45%);pointer-events:none}
-  .auth-card{position:relative;background:#fff;border-radius:22px;padding:42px 38px 30px;text-align:center;box-shadow:0 24px 70px rgba(6,40,30,.32);max-width:380px;width:100%}
-  .auth-badge{width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 18px;box-shadow:0 8px 20px rgba(16,185,129,.38)}
-  .auth-title{font-size:19px;font-weight:800;color:#15302a;letter-spacing:.02em}
-  .auth-sub{font-size:11px;color:#9aa6a2;margin:7px 0 0;letter-spacing:.18em}
-  .auth-divider{height:1px;background:var(--line);margin:22px 0}
-  #loginBtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:11px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:box-shadow .15s,background .15s}
-  #loginBtn:hover{background:#f7faf9;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  #authGate{position:fixed;inset:0;background:linear-gradient(140deg,#0b7259 0%,#16a07c 46%,#54c6a2 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;overflow:hidden}
+  #authGate::before{content:"";position:absolute;width:540px;height:540px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.20),transparent 62%);top:-180px;right:-130px}
+  #authGate::after{content:"";position:absolute;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.13),transparent 62%);bottom:-160px;left:-130px}
+  .auth-card{position:relative;background:#fff;border-radius:24px;padding:46px 40px 32px;text-align:center;box-shadow:0 28px 84px rgba(4,36,26,.36);max-width:394px;width:100%}
+  .auth-logo-mark{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;margin:0 auto 22px;box-shadow:0 12px 26px rgba(16,185,129,.4)}
+  .auth-title{font-size:21px;font-weight:800;color:#12312a;letter-spacing:.01em}
+  .auth-tag{font-size:12.5px;color:#7c968d;margin-top:8px;line-height:1.5}
+  .auth-lock{display:inline-flex;align-items:center;gap:6px;background:#e8f9f1;color:#0f766e;border-radius:999px;padding:6px 14px;font-size:11.5px;font-weight:700;margin:24px 0 2px}
+  #loginBtn{display:flex;align-items:center;justify-content:center;gap:11px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:12px;padding:13px 18px;font-size:14.5px;font-weight:700;cursor:pointer;width:100%;margin-top:14px;transition:box-shadow .15s,background .15s}
+  #loginBtn:hover{background:#f7faf9;box-shadow:0 4px 14px rgba(0,0,0,.14)}
   #loginBtn:active{transform:translateY(1px)}
-  .auth-note{font-size:11.5px;color:#9aa6a2;margin-top:18px;line-height:1.6}
-  .auth-note b{color:#0f766e}
-  .auth-error{font-size:12.5px;color:#e11d48;margin-top:12px;min-height:1em}
-  .auth-foot{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:rgba(255,255,255,.75);font-size:11px;letter-spacing:.05em}
+  .auth-error{font-size:12.5px;color:#e11d48;margin-top:14px;min-height:1em}
+  .auth-foot{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.82);font-size:11px;letter-spacing:.06em}
 </style>
 </head>
 <body>
 <div id="authGate">
   <div class="auth-card">
-    <div class="auth-badge">🌱</div>
+    <div class="auth-logo-mark">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 22V11" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/>
+        <path d="M11.5 13C11.5 9 8.2 6 4 6c0 4 3.3 7 7.5 7Z" fill="#fff"/>
+        <path d="M12.6 10.8C12.6 7 15.6 4.3 19.4 4.3c0 3.8-3 6.5-6.8 6.5Z" fill="#fff" opacity=".82"/>
+      </svg>
+    </div>
     <div class="auth-title">シードグループ 採用分析</div>
-    <div class="auth-sub">RECRUITMENT DASHBOARD</div>
-    <div class="auth-divider"></div>
+    <div class="auth-tag">ブランド横断の応募・採用ダッシュボード</div>
+    <span class="auth-lock">🔒 社内（@link-core.co.jp）限定</span>
     <button id="loginBtn">
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Google でログイン
     </button>
-    <p class="auth-note"><b>@link-core.co.jp</b> のアカウントのみ<br>ご利用いただけます</p>
     <p id="authError" class="auth-error"></p>
   </div>
   <div class="auth-foot">Powered by Link Core</div>
@@ -92,6 +98,7 @@
   <span class="powered">Powered by Link Core</span>
   <span class="updated" id="updated"></span>
   <button id="refreshBtn">最新情報へ更新</button>
+  <button id="logoutBtn" title="ログアウト">ログアウト</button>
 </header>
 
 <div class="controls">
@@ -485,6 +492,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='monthSel'){ state.monthDetail=e.target.value; render(); }
 });
 
+document.getElementById('logoutBtn').onclick=()=>{ if(window.firebase&&firebase.auth) firebase.auth().signOut(); };
 document.getElementById('refreshBtn').onclick=async()=>{
   const b=document.getElementById('refreshBtn'); b.textContent='更新中…'; b.disabled=true;
   try{ await load(); }catch(e){ alert('更新に失敗しました: '+e.message); }
