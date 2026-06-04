@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>シードグループ 採用分析ダッシュボード</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <style>
   :root{
     --bg:#f0faf6; --card:#fff; --ink:#16302a; --sub:#5f7d74; --line:#d8ece4;
@@ -53,9 +55,26 @@
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
   .clickable{cursor:pointer;color:var(--brand);text-decoration:underline dotted}
   .loading{padding:60px;text-align:center;color:var(--sub)}
+  #authGate{position:fixed;inset:0;background:linear-gradient(135deg,#0ea882,#34d399);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .auth-card{background:#fff;border-radius:18px;padding:38px 40px;text-align:center;box-shadow:0 14px 50px rgba(0,0,0,.22);max-width:360px;width:90%}
+  .auth-logo{font-size:21px;font-weight:800;color:#0f766e;line-height:1.4}
+  .auth-sub{font-size:12px;color:#6b7280;margin:6px 0 26px}
+  #loginBtn{background:#10b981;color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:800;cursor:pointer;width:100%}
+  #loginBtn:active{transform:translateY(1px)}
+  .auth-note{font-size:12px;color:#6b7280;margin-top:16px}
+  .auth-error{font-size:12.5px;color:#e11d48;margin-top:14px;min-height:1em}
 </style>
 </head>
 <body>
+<div id="authGate">
+  <div class="auth-card">
+    <div class="auth-logo">🌱 シードグループ<br>採用分析ダッシュボード</div>
+    <p class="auth-sub">Powered by Link Core</p>
+    <button id="loginBtn">Google でログイン</button>
+    <p class="auth-note">@link-core.co.jp のアカウント限定</p>
+    <p id="authError" class="auth-error"></p>
+  </div>
+</div>
 <header>
   <h1>シードグループ 採用分析ダッシュボード</h1>
   <span class="powered">Powered by Link Core</span>
@@ -410,7 +429,37 @@ document.getElementById('refreshBtn').onclick=async()=>{
   b.textContent='最新情報へ更新'; b.disabled=false;
 };
 
-load().catch(e=>{ document.getElementById('content').innerHTML='<div class="loading">データの読み込みに失敗しました。<br>'+e.message+'</div>'; });
+// ===== Firebase ログイン（@link-core.co.jp 限定）=====
+const firebaseConfig = {
+  apiKey: "AIzaSyA_pzdsr2K3mxpYskT7w24CVT1kysMjkJ0",
+  authDomain: "seed-dashboard-9afc3.firebaseapp.com",
+  projectId: "seed-dashboard-9afc3",
+  storageBucket: "seed-dashboard-9afc3.firebasestorage.app",
+  messagingSenderId: "232349675274",
+  appId: "1:232349675274:web:884bd146d2e61320a754f3"
+};
+const ALLOWED_DOMAIN = 'link-core.co.jp';
+firebase.initializeApp(firebaseConfig);
+const _auth = firebase.auth();
+const _provider = new firebase.auth.GoogleAuthProvider();
+_provider.setCustomParameters({ hd: ALLOWED_DOMAIN, prompt: 'select_account' });
+let _loaded = false;
+const _gate = document.getElementById('authGate'), _errEl = document.getElementById('authError');
+function showGate(msg){ _gate.style.display='flex'; if(msg!==undefined) _errEl.textContent=msg; }
+function hideGate(){ _gate.style.display='none'; }
+document.getElementById('loginBtn').onclick = ()=>{ _errEl.textContent='';
+  _auth.signInWithPopup(_provider).catch(err=>{ showGate('ログインに失敗しました: '+((err&&err.message)||err)); }); };
+_auth.onAuthStateChanged(user=>{
+  if(user && user.email && user.email.toLowerCase().endsWith('@'+ALLOWED_DOMAIN)){
+    hideGate();
+    if(!_loaded){ _loaded=true; load().catch(e=>{ document.getElementById('content').innerHTML='<div class="loading">データの読み込みに失敗しました。<br>'+e.message+'</div>'; }); }
+  } else if(user){
+    showGate('@'+ALLOWED_DOMAIN+' のアカウントでログインしてください（'+user.email+' は対象外です）');
+    _auth.signOut();
+  } else {
+    showGate();
+  }
+});
 </script>
 </body>
 </html>
