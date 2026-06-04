@@ -57,19 +57,20 @@
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
   .clickable{cursor:pointer;color:var(--brand);text-decoration:underline dotted}
   .loading{padding:60px;text-align:center;color:var(--sub)}
-  #authGate{position:fixed;inset:0;background:linear-gradient(140deg,#0b7259 0%,#16a07c 46%,#54c6a2 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;overflow:hidden}
-  #authGate::before{content:"";position:absolute;width:540px;height:540px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.20),transparent 62%);top:-180px;right:-130px}
-  #authGate::after{content:"";position:absolute;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.13),transparent 62%);bottom:-160px;left:-130px}
-  .auth-card{position:relative;background:#fff;border-radius:24px;padding:46px 40px 32px;text-align:center;box-shadow:0 28px 84px rgba(4,36,26,.36);max-width:394px;width:100%}
-  .auth-logo-mark{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;margin:0 auto 22px;box-shadow:0 12px 26px rgba(16,185,129,.4)}
-  .auth-title{font-size:21px;font-weight:800;color:#12312a;letter-spacing:.01em}
-  .auth-tag{font-size:12.5px;color:#7c968d;margin-top:8px;line-height:1.5}
-  .auth-lock{display:inline-flex;align-items:center;gap:6px;background:#e8f9f1;color:#0f766e;border-radius:999px;padding:6px 14px;font-size:11.5px;font-weight:700;margin:24px 0 2px}
-  #loginBtn{display:flex;align-items:center;justify-content:center;gap:11px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:12px;padding:13px 18px;font-size:14.5px;font-weight:700;cursor:pointer;width:100%;margin-top:14px;transition:box-shadow .15s,background .15s}
-  #loginBtn:hover{background:#f7faf9;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+  #authGate{position:fixed;inset:0;background:#fcfdfc;display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;overflow:hidden}
+  #authGate::before{content:"";position:absolute;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.07),transparent 70%);top:-240px;right:-170px}
+  #authGate::after{content:"";position:absolute;width:460px;height:460px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,.06),transparent 70%);bottom:-220px;left:-170px}
+  .auth-card{position:relative;width:100%;max-width:344px;text-align:left}
+  .auth-logo-mark{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;margin:0 0 30px;box-shadow:0 12px 26px rgba(16,185,129,.30)}
+  .auth-title{font-size:27px;font-weight:800;color:#16241f;letter-spacing:-.01em;line-height:1.32}
+  .auth-tag{font-size:12.5px;color:#9aa8a1;margin-top:12px;line-height:1.6}
+  .auth-divider{height:1px;background:#eef1f0;margin:30px 0 24px}
+  .auth-lock{display:inline-flex;align-items:center;gap:6px;background:#f1f6f4;color:#5d7068;border-radius:999px;padding:6px 13px;font-size:11px;font-weight:700;margin-top:18px}
+  #loginBtn{display:flex;align-items:center;justify-content:center;gap:11px;background:#fff;color:#3c4043;border:1px solid #e5e9e7;border-radius:13px;padding:14px 18px;font-size:14.5px;font-weight:700;cursor:pointer;width:100%;transition:box-shadow .15s,border-color .15s,transform .05s}
+  #loginBtn:hover{border-color:#cbd5d0;box-shadow:0 6px 18px rgba(16,185,129,.12)}
   #loginBtn:active{transform:translateY(1px)}
   .auth-error{font-size:12.5px;color:#e11d48;margin-top:14px;min-height:1em}
-  .auth-foot{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.82);font-size:11px;letter-spacing:.06em}
+  .auth-foot{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#c3cdc8;font-size:11px;letter-spacing:.06em}
 </style>
 </head>
 <body>
@@ -82,13 +83,14 @@
         <path d="M12.6 10.8C12.6 7 15.6 4.3 19.4 4.3c0 3.8-3 6.5-6.8 6.5Z" fill="#fff" opacity=".82"/>
       </svg>
     </div>
-    <div class="auth-title">シードグループ 採用分析</div>
+    <div class="auth-title">シードグループ<br>採用分析</div>
     <div class="auth-tag">ブランド横断の応募・採用ダッシュボード</div>
-    <span class="auth-lock">🔒 社内（@link-core.co.jp）限定</span>
+    <div class="auth-divider"></div>
     <button id="loginBtn">
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Google でログイン
     </button>
+    <span class="auth-lock">🔒 社内（@link-core.co.jp）限定</span>
     <p id="authError" class="auth-error"></p>
   </div>
   <div class="auth-foot">Powered by Link Core</div>
