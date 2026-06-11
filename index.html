@@ -70,6 +70,9 @@
   #loginBtn{display:flex;align-items:center;justify-content:center;gap:11px;background:#fff;color:#3c4043;border:1px solid #e5e9e7;border-radius:13px;padding:14px 18px;font-size:14.5px;font-weight:700;cursor:pointer;width:100%;transition:box-shadow .15s,border-color .15s,transform .05s}
   #loginBtn:hover{border-color:#cbd5d0;box-shadow:0 6px 18px rgba(16,185,129,.12)}
   #loginBtn:active{transform:translateY(1px)}
+  .mnav{background:#fff;border:1px solid var(--line);color:var(--brand);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+  .mnav:hover:not([disabled]){background:#eef9f4;border-color:var(--brand)}
+  .mnav[disabled]{color:#c2cfca;border-color:#eef1f0;cursor:default}
   .auth-error{font-size:12.5px;color:#e11d48;margin-top:14px;min-height:1em}
   .auth-foot{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#c3cdc8;font-size:11px;letter-spacing:.06em}
 </style>
@@ -296,6 +299,8 @@ function viewMonthly(recs){
   if(!months.length) return `<div class="card"><h2>月別推移</h2><p class="muted">この条件のデータがありません。</p></div>`;
   if(!state.monthDetail || !months.includes(state.monthDetail)) state.monthDetail=months[months.length-1];
   const md=state.monthDetail, lbl=mlabel(md);
+  const mi=months.indexOf(md);
+  const prevYm=mi>0?months[mi-1]:'', nextYm=mi<months.length-1?months[mi+1]:'';
   const opts=months.slice().reverse().map(m=>`<option value="${m}" ${m===md?'selected':''}>${mlabel(m)}</option>`).join('');
   // 月別テーブル（全月・行クリックで選択）
   const rows=groupAgg(recs, r=>r.ym).sort((a,b)=>a.key.localeCompare(b.key));
@@ -308,8 +313,12 @@ function viewMonthly(recs){
   return `
   <div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
     <h2 style="margin:0">月を選んで深掘り</h2>
-    <select id="monthSel" style="padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-weight:700;color:var(--ink)">${opts}</select>
-    <span class="muted">▶ ${lbl} の内訳を表示中</span>
+    <div style="display:inline-flex;align-items:center;gap:8px">
+      <button class="mnav" id="monthPrev" ${prevYm?`data-ym="${prevYm}" title="${mlabel(prevYm)}"`:'disabled'}>◀ 前月</button>
+      <select id="monthSel" style="padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-weight:700;color:var(--ink)">${opts}</select>
+      <button class="mnav" id="monthNext" ${nextYm?`data-ym="${nextYm}" title="${mlabel(nextYm)}"`:'disabled'}>次月 ▶</button>
+    </div>
+    <span class="muted">${lbl} の内訳を表示中</span>
   </div>
   <div class="kpis">
     ${kpi(lbl+' 応募数',fmt(a.app)+'<span style="font-size:14px">人</span>')}
@@ -484,6 +493,8 @@ function trendOpts(money){return{responsive:true,maintainAspectRatio:false,plugi
 
 // click brand rows -> filter (delegate)
 document.addEventListener('click',e=>{
+  const mnav=e.target.closest('.mnav');
+  if(mnav){ if(mnav.dataset.ym){ state.monthDetail=mnav.dataset.ym; render(); } return; }
   const moRow=e.target.closest('.moRow');
   if(moRow){ state.monthDetail=moRow.dataset.ym; render(); return; }
   const tr=e.target.closest('#content table tr'); if(!tr) return;
